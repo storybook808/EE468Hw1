@@ -58,7 +58,7 @@ void parse_args(char *buffer, char** args,
 int main(int argc, char *argv[], char *envp[]){
     
     //added varaiables
-    int temp; //outer for-loop variable
+    int temp, temp2; //outer for-loop variable
     int pipe_count; //pipe counter
     int ps_count;
     Child child[CHILD_MAX]; //child information
@@ -73,12 +73,8 @@ int main(int argc, char *argv[], char *envp[]){
     size_t nargs;
     pid_t pid[PIPE_MAX + 1];
 
-    for(temp = 0; temp < PIPE_MAX; temp++)
-    {
-    	pipe(child[temp].fd);
-    }
-    
     while(1){
+
         printf("ee468>> "); /* Prompt */
         fgets(buffer, BUFFER_SIZE, stdin); /* Read in command line */
         /* Parse the command line into args */
@@ -121,6 +117,13 @@ int main(int argc, char *argv[], char *envp[]){
 		continue;
 	}
 
+	//program panics if MAX_COUNT is replaced with pipe_count
+	for(temp = 0; temp < PIPE_MAX; temp++)
+	{
+		pipe(child[temp].fd);
+	}
+
+
 	//form the correct number of sub-processes needed
 	for(temp = 0; temp < pipe_count + 1; temp++)
 	{
@@ -142,11 +145,41 @@ int main(int argc, char *argv[], char *envp[]){
 
         if(child_id == -1) /* The parent */
 	{
+		waitpid(-1, NULL, 0);
+		printf("Passed Wait\n");
+		for(temp = 0; temp < pipe_count + 1; temp++)
+		{
+			close(child[temp].fd[0]);
+			close(child[temp].fd[1]);
+		}
+	/*
 	    //wait for every child to exit
 	    for(temp = 0; temp < pipe_count + 1; temp++)
 	    {
-	    	wait() > 0; //ret_statues
-	    }
+	    	if(temp != pipe_count) 
+		{
+			printf("closing %d\n", temp);
+			close(child[temp].fd[1]);
+		}
+		if(temp != 0)
+		{
+			close(child[temp-1].fd[0]);
+		}
+		close(child[0].fd[0]);
+		close(child[0].fd[1]);
+	    	close(child[1].fd[0]);
+		close(child[1].fd[1]); 
+		close(child[2].fd[0]);
+		close(child[2].fd[1]);
+		
+		
+		
+		
+		wait(); //ret_statues
+		//if(temp != pipe_count) close(child[temp].fd[1]);
+		//close(child[temp+1].fd[0]);
+
+	    }*/
         } 
 
         else /* The child executing the command */
@@ -158,6 +191,7 @@ int main(int argc, char *argv[], char *envp[]){
 		{
 			if(child_id == temp)
 			{
+				printf("I am child %d\n", child_id);
 				close(1);
 				close(2);
 				dup2(child[temp].fd[1], 1);
