@@ -101,9 +101,13 @@ int main(int argc, char *argv[], char *envp[]){
 		pipe_count++;
 		ps_count = 0;
 	    }
-
-	    ps_count++;
+	    else
+	    {
+	    	ps_count++;
+	    }
 	}
+
+	child[pipe_count].args[ps_count + 1] = NULL;
 
 	//check for overflow for pipes
 	if(pipe_count > PIPE_MAX)
@@ -116,7 +120,6 @@ int main(int argc, char *argv[], char *envp[]){
 	for(temp = 0; temp < pipe_count + 1; temp++)
 	{
 		//create child process
-		printf("Creating child #%d\n", temp + 1);
 		pid[temp] = fork();
 
 		//child process
@@ -135,7 +138,10 @@ int main(int argc, char *argv[], char *envp[]){
         if (child_id == -1) /* The parent */
 	{
 	    //wait for every child to exit
-	    while(wait(ret_status) > 0);
+	    for(temp = 0; temp < pipe_count + 1; temp++)
+	    {
+	    	wait() > 0; //ret_statues
+	    }
         } 
 
         else /* The child executing the command */
