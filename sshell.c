@@ -72,6 +72,11 @@ int main(int argc, char *argv[], char *envp[]){
     int *ret_status;
     size_t nargs;
     pid_t pid[PIPE_MAX + 1];
+
+    for(temp = 0; temp < PIPE_MAX; temp++)
+    {
+    	pipe(child[temp].fd);
+    }
     
     while(1){
         printf("ee468>> "); /* Prompt */
@@ -135,7 +140,7 @@ int main(int argc, char *argv[], char *envp[]){
 
 	
 
-        if (child_id == -1) /* The parent */
+        if(child_id == -1) /* The parent */
 	{
 	    //wait for every child to exit
 	    for(temp = 0; temp < pipe_count + 1; temp++)
@@ -146,6 +151,32 @@ int main(int argc, char *argv[], char *envp[]){
 
         else /* The child executing the command */
 	{
+	    //set up pipe
+	    if(pipe_count > 0)
+	    {
+	    	for(temp = 0; temp < pipe_count; temp++)
+		{
+			if(child_id == temp)
+			{
+				close(1);
+				close(2);
+				dup2(child[temp].fd[1], 1);
+				dup2(child[temp].fd[1], 2);
+				close(child[temp].fd[0]);
+			}
+		}
+		for(temp = 1; temp < pipe_count + 1; temp++)
+		{
+			if(child_id == temp)
+			{
+				close(0);
+				dup2(child[temp - 1].fd[0], 0);
+				close(child[temp - 1].fd[1]);
+			}
+		}
+	    }
+
+	    //do stuff
 	    if(execvp(child[child_id].args[0], child[child_id].args))
 	    {
                 puts(strerror(errno));
